@@ -107,7 +107,7 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         throw new \LogicException('unset() is not supported.');
     }
 
-    public function containsKey(string|int $key): bool
+    public function containsKey($key): bool
     {
         $this->initialize();
 
@@ -249,7 +249,7 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         throw new \LogicException('clear() is not supported.');
     }
 
-    public function slice(int $offset, int|null $length = null): array
+    public function slice($offset, $length = null): array
     {
         $this->initialize();
 
