@@ -30,6 +30,7 @@
         "symfony/finder": "*",
         "symfony/css-selector": "*",
         "doctrine/orm": "*",
+        "doctrine/collections": "^1.8.0",
         "symfony/twig-bundle": "*",
         "symfony/form": "*",
         "symfony/validator": "*",
