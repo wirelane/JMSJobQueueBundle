@@ -107,7 +107,7 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         throw new \LogicException('unset() is not supported.');
     }
 
-    public function containsKey(string|int $key): bool
+    public function containsKey($key): bool
     {
         $this->initialize();
 
@@ -141,7 +141,7 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         return array_search($element, $this->entities, true);
     }
 
-    public function get(string|int $key)
+    public function get($key)
     {
         $this->initialize();
 
