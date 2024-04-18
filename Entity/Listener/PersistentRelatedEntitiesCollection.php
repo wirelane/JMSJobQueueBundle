@@ -38,35 +38,35 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         return $this->entities;
     }
 
-    public function first()
+    public function first(): mixed
     {
         $this->initialize();
 
         return reset($this->entities);
     }
 
-    public function last()
+    public function last(): mixed
     {
         $this->initialize();
 
         return end($this->entities);
     }
 
-    public function key()
+    public function key(): mixed
     {
         $this->initialize();
 
         return key($this->entities);
     }
 
-    public function next()
+    public function next(): mixed
     {
         $this->initialize();
 
         return next($this->entities);
     }
 
-    public function current()
+    public function current(): mixed
     {
         $this->initialize();
 
@@ -134,14 +134,14 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         return false;
     }
 
-    public function indexOf(mixed $element)
+    public function indexOf(mixed $element): mixed
     {
         $this->initialize();
 
         return array_search($element, $this->entities, true);
     }
 
-    public function get($key)
+    public function get($key): mixed
     {
         $this->initialize();
 
@@ -196,14 +196,14 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         return new ArrayIterator($this->entities);
     }
 
-    public function map(Closure $func)
+    public function map(Closure $func): Collection
     {
         $this->initialize();
 
         return new ArrayCollection(array_map($func, $this->entities));
     }
 
-    public function filter(Closure $p)
+    public function filter(Closure $p): Collection
     {
         $this->initialize();
 
@@ -223,7 +223,7 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         return true;
     }
 
-    public function partition(Closure $p)
+    public function partition(Closure $p): array
     {
         $this->initialize();
 
@@ -256,7 +256,7 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         return array_slice($this->entities, $offset, $length, true);
     }
 
-    public function matching(Criteria $criteria)
+    public function matching(Criteria $criteria): Collection
     {
         $this->initialize();
 
