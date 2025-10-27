@@ -21,17 +21,13 @@ class ScheduleCommand extends Command
 {
     protected static $defaultName = 'jms-job-queue:schedule';
 
-    private $registry;
-    private $schedulers;
-    private $cronCommands;
-
-    public function __construct(ManagerRegistry $managerRegistry, iterable $schedulers, iterable $cronCommands)
-    {
+    public function __construct(
+        private readonly ManagerRegistry $registry,
+        /** @var JobScheduler[] */
+        private readonly iterable $schedulers,
+        private readonly iterable $cronCommands
+    ) {
         parent::__construct();
-
-        $this->registry = $managerRegistry;
-        $this->schedulers = $schedulers;
-        $this->cronCommands = $cronCommands;
     }
 
     protected function configure(): void
@@ -64,8 +60,9 @@ class ScheduleCommand extends Command
 
             return 0;
         }
-
-        $jobsLastRunAt = $this->populateJobsLastRunAt($this->registry->getManagerForClass(CronJob::class), $jobSchedulers);
+        /** @var EntityManager $em */
+        $em = $this->registry->getManagerForClass(CronJob::class);
+        $jobsLastRunAt = $this->populateJobsLastRunAt($em, $jobSchedulers);
 
         $startedAt = time();
         while (true) {
@@ -76,11 +73,11 @@ class ScheduleCommand extends Command
                 break;
             }
 
-            $this->scheduleJobs($output, $jobSchedulers, $jobsLastRunAt);
+            $jobsLastRunAt = $this->scheduleJobs($output, $jobSchedulers, $jobsLastRunAt);
 
             $timeToWait = microtime(true) - $lastRunAt + $minJobInterval;
             if ($timeToWait > 0) {
-                usleep($timeToWait * 1E6);
+                usleep((int) ($timeToWait * 1E6));
             }
         }
 
@@ -91,7 +88,7 @@ class ScheduleCommand extends Command
      * @param JobScheduler[] $jobSchedulers
      * @param \DateTime[] $jobsLastRunAt
      */
-    private function scheduleJobs(OutputInterface $output, array $jobSchedulers, array &$jobsLastRunAt): void
+    private function scheduleJobs(OutputInterface $output, array $jobSchedulers, array $jobsLastRunAt): array
     {
         foreach ($jobSchedulers as $name => $scheduler) {
             $lastRunAt = $jobsLastRunAt[$name];
@@ -111,6 +108,8 @@ class ScheduleCommand extends Command
                 $em->flush();
             }
         }
+
+        return $jobsLastRunAt;
     }
 
     private function acquireLock($commandName, \DateTime $lastRunAt): array
@@ -120,7 +119,7 @@ class ScheduleCommand extends Command
         $con = $em->getConnection();
 
         $now = new \DateTime();
-        $affectedRows = $con->executeUpdate(
+        $affectedRows = $con->executeStatement(
             "UPDATE jms_cron_jobs SET lastRunAt = :now WHERE command = :command AND lastRunAt = :lastRunAt",
             array(
                 'now' => $now,
@@ -150,7 +149,6 @@ class ScheduleCommand extends Command
     {
         $schedulers = [];
         foreach ($this->schedulers as $scheduler) {
-            /** @var JobScheduler $scheduler */
             foreach ($scheduler->getCommands() as $name) {
                 $schedulers[$name] = $scheduler;
             }
@@ -162,7 +160,8 @@ class ScheduleCommand extends Command
                 throw new \RuntimeException('CronCommand should only be used on Symfony commands.');
             }
 
-            $schedulers[$command->getName()] = new CommandScheduler($command->getName(), $command);
+            $commandName = $command->getName();
+            $schedulers[$commandName] = new CommandScheduler($commandName, $command);
         }
 
         return $schedulers;

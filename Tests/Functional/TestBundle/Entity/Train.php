@@ -12,5 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 class Train
 {
     #[ORM\Id]
-    public $id;
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    public ?int $id = null;
 }

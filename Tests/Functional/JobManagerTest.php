@@ -11,7 +11,7 @@ use JMS\JobQueueBundle\Tests\Functional\TestBundle\Entity\Train;
 use JMS\JobQueueBundle\Tests\Functional\TestBundle\Entity\Wagon;
 
 use PHPUnit\Framework\Constraint\LogicalNot;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManager;
 use JMS\JobQueueBundle\Entity\Repository\JobManager;
 use JMS\JobQueueBundle\Event\StateChangeEvent;
@@ -25,7 +25,7 @@ class JobManagerTest extends BaseTestCase
     /** @var JobManager */
     private $jobManager;
 
-    /** @var EventDispatcher */
+    /** @var \PHPUnit\Framework\MockObject\MockObject&EventDispatcherInterface */
     private $dispatcher;
 
     public function testGetOne()
@@ -167,7 +167,7 @@ class JobManagerTest extends BaseTestCase
         $this->assertTrue($this->em->contains($b));
     }
 
-    public function testCloseJob()
+    public function testCloseJob(): void
     {
         $a = new Job('a');
         $a->setState('running');
@@ -177,18 +177,19 @@ class JobManagerTest extends BaseTestCase
         $this->em->persist($b);
         $this->em->flush();
 
-        $this->dispatcher->expects($this->at(0))
-            ->method('dispatch')
-            ->with(new StateChangeEvent($a, 'terminated'), 'jms_job_queue.job_state_change');
-        $this->dispatcher->expects($this->at(1))
-            ->method('dispatch')
-            ->with(new StateChangeEvent($b, 'canceled'), 'jms_job_queue.job_state_change');
+        $this->assertSame('running', $a->getState());
+        $this->assertSame('pending', $b->getState());
 
-        $this->assertEquals('running', $a->getState());
-        $this->assertEquals('pending', $b->getState());
+        $dispatched = [];
+        $this->dispatcher
+            ->method('dispatch')
+            ->willReturnCallback($this->recordDispatchCalls($dispatched));
+
         $this->jobManager->closeJob($a, 'terminated');
-        $this->assertEquals('terminated', $a->getState());
-        $this->assertEquals('canceled', $b->getState());
+
+        $this->assertCount(2, $dispatched);
+        $this->assertEquals('terminated', $dispatched[0][0]->getNewState());
+        $this->assertEquals('canceled', $dispatched[1][0]->getNewState());
     }
 
     public function testCloseJobDoesNotCreateRetryJobsWhenCanceled()
@@ -202,19 +203,16 @@ class JobManagerTest extends BaseTestCase
         $this->em->persist($b);
         $this->em->flush();
 
-        $this->dispatcher->expects($this->at(0))
+        $dispatched = [];
+        $this->dispatcher
             ->method('dispatch')
-            ->with(new StateChangeEvent($a, 'canceled'), 'jms_job_queue.job_state_change');
-
-        $this->dispatcher->expects($this->at(1))
-            ->method('dispatch')
-            ->with(new StateChangeEvent($b, 'canceled'), 'jms_job_queue.job_state_change');
+            ->willReturnCallback($this->recordDispatchCalls($dispatched));
 
         $this->jobManager->closeJob($a, 'canceled');
-        $this->assertEquals('canceled', $a->getState());
-        $this->assertCount(0, $a->getRetryJobs());
-        $this->assertEquals('canceled', $b->getState());
-        $this->assertCount(0, $b->getRetryJobs());
+
+        $this->assertCount(2, $dispatched);
+        $this->assertEquals('canceled', $dispatched[0][0]->getNewState());
+        $this->assertEquals('canceled', $dispatched[1][0]->getNewState());
     }
 
     public function testCloseJobDoesNotCreateMoreThanAllowedRetries()
@@ -225,32 +223,36 @@ class JobManagerTest extends BaseTestCase
         $this->em->persist($a);
         $this->em->flush();
 
-        $this->dispatcher->expects($this->at(0))
+        $dispatched = [];
+        $this->dispatcher
             ->method('dispatch')
-            ->with(new StateChangeEvent($a, 'failed'), 'jms_job_queue.job_state_change');
-        $this->dispatcher->expects($this->at(1))
-            ->method('dispatch')
-            ->with(new LogicalNot($this->equalTo(new StateChangeEvent($a, 'failed'))), 'jms_job_queue.job_state_change');
-        $this->dispatcher->expects($this->at(2))
-            ->method('dispatch')
-            ->with(new LogicalNot($this->equalTo(new StateChangeEvent($a, 'failed'))), 'jms_job_queue.job_state_change');
+            ->willReturnCallback($this->recordDispatchCalls($dispatched));
 
         $this->assertCount(0, $a->getRetryJobs());
         $this->jobManager->closeJob($a, 'failed');
         $this->assertEquals('running', $a->getState());
         $this->assertCount(1, $a->getRetryJobs());
+        $this->assertCount(1, $dispatched);
+        $this->assertEquals('failed', $dispatched[0][0]->getNewState());
+        $this->assertEquals('jms_job_queue.job_state_change', $dispatched[0][1]);
 
         $a->getRetryJobs()->first()->setState('running');
         $this->jobManager->closeJob($a->getRetryJobs()->first(), 'failed');
         $this->assertCount(2, $a->getRetryJobs());
         $this->assertEquals('failed', $a->getRetryJobs()->first()->getState());
         $this->assertEquals('running', $a->getState());
+        $this->assertCount(2, $dispatched);
+        $this->assertEquals('failed', $dispatched[1][0]->getNewState());
+        $this->assertEquals('jms_job_queue.job_state_change', $dispatched[1][1]);
 
         $a->getRetryJobs()->last()->setState('running');
         $this->jobManager->closeJob($a->getRetryJobs()->last(), 'terminated');
         $this->assertCount(2, $a->getRetryJobs());
         $this->assertEquals('terminated', $a->getRetryJobs()->last()->getState());
         $this->assertEquals('terminated', $a->getState());
+        $this->assertCount(3, $dispatched);
+        $this->assertEquals('terminated', $dispatched[2][0]->getNewState());
+        $this->assertEquals('jms_job_queue.job_state_change', $dispatched[2][1]);
 
         $this->em->clear();
         $reloadedA = $this->em->find(Job::class, $a->getId());
@@ -292,12 +294,21 @@ class JobManagerTest extends BaseTestCase
         $this->createClient();
         $this->importDatabaseSchema();
 
-        $this->dispatcher = $this->createMock('Symfony\Component\EventDispatcher\EventDispatcherInterface');
+        $this->dispatcher = $this->createMock(EventDispatcherInterface::class);
         $this->em = self::$kernel->getContainer()->get('doctrine')->getManagerForClass(Job::class);
         $this->jobManager = new JobManager(
             self::$kernel->getContainer()->get('doctrine'),
             $this->dispatcher,
             new ExponentialRetryScheduler()
         );
+    }
+
+    private function recordDispatchCalls(array &$dispatched): callable
+    {
+        return function ($event, $eventName) use (&$dispatched) {
+            $dispatched[] = [$event, $eventName];
+
+            return $event;
+        };
     }
 }

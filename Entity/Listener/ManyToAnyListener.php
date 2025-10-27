@@ -24,12 +24,11 @@ use JMS\JobQueueBundle\Entity\Job;
  */
 class ManyToAnyListener
 {
-    private ManagerRegistry $registry;
     private \ReflectionProperty $ref;
 
-    public function __construct(ManagerRegistry $registry)
-    {
-        $this->registry = $registry;
+    public function __construct(
+        private readonly ManagerRegistry $registry
+    ) {
         $this->ref = new \ReflectionProperty(Job::class, 'relatedEntities');
         $this->ref->setAccessible(true);
     }
@@ -102,8 +101,8 @@ class ManyToAnyListener
 
         $table = $schema->createTable('jms_job_related_entities');
         $table->addColumn('job_id', 'bigint', ['notnull' => true, 'unsigned' => true]);
-        $table->addColumn('related_class', 'string', ['notnull' => true, 'length' => '150']);
-        $table->addColumn('related_id', 'string', ['notnull' => true, 'length' => '100']);
+        $table->addColumn('related_class', 'string', ['notnull' => true, 'length' => 150]);
+        $table->addColumn('related_id', 'string', ['notnull' => true, 'length' => 100]);
         $table->setPrimaryKey(['job_id', 'related_class', 'related_id']);
         $table->addForeignKeyConstraint('jms_jobs', ['job_id'], ['id']);
     }

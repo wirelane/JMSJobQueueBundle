@@ -97,7 +97,7 @@ CONFIG
     {
         $start = time();
         do {
-            usleep(2E5);
+            usleep(200000);
 
             /** @var EntityManager $em */
             $em = self::$kernel->getContainer()->get('doctrine')->getManager();

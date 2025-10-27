@@ -12,9 +12,11 @@ use Doctrine\ORM\Mapping as ORM;
 class Wagon
 {
     #[ORM\Id]
-    public $id;
+    #[ORM\Column(type: 'integer')]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    public ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: \Train::class)]
+    #[ORM\ManyToOne(targetEntity: Train::class)]
     public $train;
 
     #[ORM\Column(type: 'string')]

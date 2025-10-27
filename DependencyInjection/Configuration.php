@@ -37,7 +37,8 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('jms_job_queue');
         $rootNode = $treeBuilder->getRootNode();
-
+        
+        /** @var ArrayNodeDefinition $rootNode */
         $rootNode
             ->children()
                 ->booleanNode('statistics')->defaultTrue()->end();
@@ -53,6 +54,8 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode('queue_options')
                     ->useAttributeAsKey('queue')
                     ->prototype('array');
+
+        /** @var ArrayNodeDefinition $queueOptionsNode */
         $this->addQueueOptions($queueOptionsNode);
 
         return $treeBuilder;

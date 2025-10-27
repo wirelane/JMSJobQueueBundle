@@ -35,7 +35,6 @@ use Symfony\Component\ErrorHandler\Exception\FlattenException;
 #[ORM\Entity]
 #[ORM\ChangeTrackingPolicy('DEFERRED_EXPLICIT')]
 class Job
-
 {
     /** State if job is inserted, but not yet ready to be started. */
     public const STATE_NEW = 'new';
@@ -91,6 +90,9 @@ class Job
     public const PRIORITY_HIGH = 5;
 
     #[ORM\Id]
+    #[ORM\Column(type: 'bigint', options: ['unsigned' => true])]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+
     private $id;
 
     #[ORM\Column(type: 'string', length: 15)]
@@ -305,7 +307,7 @@ class Job
                 if ($newState === self::STATE_RUNNING) {
                     $this->startedAt = new \DateTime();
                     $this->checkedAt = new \DateTime();
-                } else if ($newState === self::STATE_CANCELED) {
+                } else {
                     $this->closedAt = new \DateTime();
                 }
 

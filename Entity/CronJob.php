@@ -12,7 +12,9 @@ use Doctrine\ORM\Mapping as ORM;
 class CronJob
 {
     #[ORM\Id]
-    private $id;
+    #[ORM\Column(type: 'integer', options: ['unsigned' => true])]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 200, unique: true)]
     private $command;

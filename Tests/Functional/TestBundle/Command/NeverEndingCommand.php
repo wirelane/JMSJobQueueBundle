@@ -17,6 +17,7 @@ class NeverEndingCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        // @phpstan-ignore-next-line while.alwaysTrue
         while (true) {
             sleep(5);
         }
