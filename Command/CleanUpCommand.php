@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Command;
 
 use Doctrine\Bundle\DoctrineBundle\Registry;
