@@ -19,6 +19,8 @@ declare(strict_types=1);
  */
 namespace JMS\JobQueueBundle\Entity;
 
+use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\JobQueueBundle\Exception\InvalidStateTransitionException;
@@ -90,42 +92,42 @@ class Job
     public const PRIORITY_HIGH = 5;
 
     #[ORM\Id]
-    #[ORM\Column(type: 'bigint', options: ['unsigned' => true])]
+    #[ORM\Column(type: Types::BIGINT, options: ['unsigned' => true])]
     #[ORM\GeneratedValue(strategy: 'AUTO')]
 
-    private $id;
+    private ?string $id = null;
 
-    #[ORM\Column(type: 'string', length: 15)]
-    private $state;
+    #[ORM\Column(type: Types::STRING, length: 15)]
+    private ?string $state = null;
 
-    #[ORM\Column(type: 'string', length: Job::MAX_QUEUE_LENGTH)]
-    private $queue;
+    #[ORM\Column(type: Types::STRING, length: Job::MAX_QUEUE_LENGTH)]
+    private ?string $queue = null;
 
-    #[ORM\Column(type: 'smallint')]
-    private $priority = 0;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $priority = 0;
 
-    #[ORM\Column(type: 'datetime', name: 'createdAt')]
-    private $createdAt;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: 'createdAt')]
+    private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(type: 'datetime', name: 'startedAt', nullable: true)]
-    private $startedAt;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: 'startedAt', nullable: true)]
+    private ?\DateTimeInterface $startedAt = null;
 
-    #[ORM\Column(type: 'datetime', name: 'checkedAt', nullable: true)]
-    private $checkedAt;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: 'checkedAt', nullable: true)]
+    private ?\DateTimeInterface $checkedAt = null;
 
-    #[ORM\Column(type: 'string', name: 'workerName', length: 50, nullable: true)]
-    private $workerName;
+    #[ORM\Column(type: Types::STRING, name: 'workerName', length: 50, nullable: true)]
+    private ?string $workerName = null;
 
-    #[ORM\Column(type: 'datetime', name: 'executeAfter', nullable: true)]
-    private $executeAfter;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: 'executeAfter', nullable: true)]
+    private ?\DateTimeInterface $executeAfter = null;
 
-    #[ORM\Column(type: 'datetime', name: 'closedAt', nullable: true)]
-    private $closedAt;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, name: 'closedAt', nullable: true)]
+    private ?\DateTimeInterface $closedAt = null;
 
-    #[ORM\Column(type: 'string')]
-    private $command;
+    #[ORM\Column(type: Types::STRING)]
+    private ?string $command = null;
 
-    #[ORM\Column(type: 'json')]
+    #[ORM\Column(type: Types::JSON)]
     private $args;
 
     #[ORM\JoinTable(name: 'jms_job_dependencies')]
@@ -134,24 +136,24 @@ class Job
     #[ORM\ManyToMany(targetEntity: Job::class, fetch: 'EAGER')]
     private $dependencies;
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private $output;
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $output = null;
 
-    #[ORM\Column(type: 'text', name: 'errorOutput', nullable: true)]
-    private $errorOutput;
+    #[ORM\Column(type: Types::TEXT, name: 'errorOutput', nullable: true)]
+    private ?string $errorOutput = null;
 
-    #[ORM\Column(type: 'smallint', name: 'exitCode', nullable: true, options: ['unsigned' => true])]
-    private $exitCode;
+    #[ORM\Column(type: Types::SMALLINT, name: 'exitCode', nullable: true, options: ['unsigned' => true])]
+    private ?int $exitCode = null;
 
-    #[ORM\Column(type: 'smallint', name: 'maxRuntime', options: ['unsigned' => true])]
-    private $maxRuntime = 0;
+    #[ORM\Column(type: Types::SMALLINT, name: 'maxRuntime', options: ['unsigned' => true])]
+    private ?int $maxRuntime = 0;
 
-    #[ORM\Column(type: 'smallint', name: 'maxRetries', options: ['unsigned' => true])]
-    private $maxRetries = 0;
+    #[ORM\Column(type: Types::SMALLINT, name: 'maxRetries', options: ['unsigned' => true])]
+    private ?int $maxRetries = 0;
 
     #[ORM\JoinColumn(name: 'originalJob_id', referencedColumnName: 'id')]
     #[ORM\ManyToOne(targetEntity: Job::class, inversedBy: 'retryJobs')]
-    private $originalJob;
+    private ?Job $originalJob = null;
 
     #[ORM\OneToMany(targetEntity: Job::class, mappedBy: 'originalJob', cascade: ['persist', 'remove', 'detach', 'refresh'])]
     private $retryJobs;
@@ -159,14 +161,14 @@ class Job
     #[ORM\Column(type: 'jms_job_safe_object', name: 'stackTrace', nullable: true)]
     private $stackTrace;
 
-    #[ORM\Column(type: 'smallint', nullable: true, options: ['unsigned' => true])]
-    private $runtime;
+    #[ORM\Column(type: Types::SMALLINT, nullable: true, options: ['unsigned' => true])]
+    private ?int $runtime = null;
 
-    #[ORM\Column(type: 'integer', name: 'memoryUsage', nullable: true, options: ['unsigned' => true])]
-    private $memoryUsage;
+    #[ORM\Column(type: Types::INTEGER, name: 'memoryUsage', nullable: true, options: ['unsigned' => true])]
+    private ?int $memoryUsage = null;
 
-    #[ORM\Column(type: 'integer', name: 'memoryUsageReal', nullable: true, options: ['unsigned' => true])]
-    private $memoryUsageReal;
+    #[ORM\Column(type: Types::INTEGER, name: 'memoryUsageReal', nullable: true, options: ['unsigned' => true])]
+    private ?int $memoryUsageReal = null;
 
     /**
      * This may store any entities which are related to this job, and are
@@ -399,6 +401,9 @@ class Job
         $this->relatedEntities->add($entity);
     }
 
+    /**
+     * @return Collection<int, Job>
+     */
     public function getDependencies()
     {
         return $this->dependencies;
@@ -550,6 +555,9 @@ class Job
         $this->retryJobs->add($job);
     }
 
+    /**
+     * @return Collection<int, Job>
+     */
     public function getRetryJobs()
     {
         return $this->retryJobs;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMS\JobQueueBundle\Tests\Functional;
 
+use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\ORM\EntityManager;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -28,7 +29,7 @@ class BaseTestCase extends WebTestCase
     {
         $metadata = $em->getMetadataFactory()->getAllMetadata();
         if (!empty($metadata)) {
-            $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($em);
+            $schemaTool = new SchemaTool($em);
             $schemaTool->createSchema($metadata);
         }
     }

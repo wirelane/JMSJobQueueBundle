@@ -9,11 +9,10 @@ use Rector\Doctrine\Orm214\Rector\Param\ReplaceLifecycleEventArgsByDedicatedEven
 use Rector\Php74\Rector\Property\RestoreDefaultNullToNullableTypePropertyRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\ReturnTypeFromStrictNativeCallRector;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
-use Rector\Symfony\Set\SymfonySetList;
 
-return static function (RectorConfig $rectorConfig): void {
-    // ✅ Directories to process
-    $rectorConfig->paths([
+return RectorConfig::configure()
+    // paths & skips
+    ->withPaths([
         __DIR__ . '/Command',
         __DIR__ . '/Controller',
         __DIR__ . '/Entity',
@@ -22,34 +21,36 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__ . '/Twig',
         __DIR__ . '/Tests',
         __DIR__ . '/Resources',
-    ]);
-
-    // ✅ Skip vendor + irrelevant dirs
-    $rectorConfig->skip([
+    ])
+    ->withSkip([
         __DIR__ . '/vendor',
         __DIR__ . '/var',
         __DIR__ . '/.git',
         __DIR__ . '/Dockerfile',
         __DIR__ . '/docker-compose.yml',
         __DIR__ . '/node_modules',
-    ]);
+    ])
 
-    // ✅ Optional: clean import settings
-    $rectorConfig->importNames(false, true);
+    // imports (same behavior as your importNames(false, true))
+    ->withImportNames(
+        removeUnusedImports: true,
+        importShortClasses: false
+    )
 
-    // ✅ Individual rules
-    $rectorConfig->rules([
+    // individual rules
+    ->withRules([
         ReplaceLifecycleEventArgsByDedicatedEventArgsRector::class,
         RestoreDefaultNullToNullableTypePropertyRector::class,
         ReturnTypeFromStrictNativeCallRector::class,
         DeclareStrictTypesRector::class,
-    ]);
+    ])
 
-    // ✅ Doctrine & Symfony sets
-    $rectorConfig->sets([
-        DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES,
+    // any non-annotation sets you still want
+    ->withSets([
         DoctrineSetList::DOCTRINE_CODE_QUALITY,
-        DoctrineSetList::GEDMO_ANNOTATIONS_TO_ATTRIBUTES,
-        SymfonySetList::ANNOTATIONS_TO_ATTRIBUTES, // optional if bundle uses Symfony attrs
-    ]);
-};
+    ])
+
+    ->withAttributesSets(
+        doctrine: true,
+        symfony: true
+    );

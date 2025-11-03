@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace JMS\JobQueueBundle\Tests\Functional;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use JMS\JobQueueBundle\Retry\ExponentialRetryScheduler;
-use JMS\JobQueueBundle\Retry\RetryScheduler;
 use JMS\JobQueueBundle\Tests\Functional\TestBundle\Entity\Train;
 
 use JMS\JobQueueBundle\Tests\Functional\TestBundle\Entity\Wagon;
-
-use PHPUnit\Framework\Constraint\LogicalNot;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManager;
 use JMS\JobQueueBundle\Entity\Repository\JobManager;
-use JMS\JobQueueBundle\Event\StateChangeEvent;
 use JMS\JobQueueBundle\Entity\Job;
 
 class JobManagerTest extends BaseTestCase
@@ -25,7 +22,7 @@ class JobManagerTest extends BaseTestCase
     /** @var JobManager */
     private $jobManager;
 
-    /** @var \PHPUnit\Framework\MockObject\MockObject&EventDispatcherInterface */
+    /** @var MockObject&EventDispatcherInterface */
     private $dispatcher;
 
     public function testGetOne()

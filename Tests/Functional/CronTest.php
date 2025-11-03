@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JMS\JobQueueBundle\Tests\Functional;
 
-use Doctrine\ORM\EntityManager;
 use JMS\JobQueueBundle\Entity\Job;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Bundle\FrameworkBundle\Console\Application;

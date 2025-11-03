@@ -19,6 +19,7 @@ declare(strict_types=1);
  */
 namespace JMS\JobQueueBundle\Tests\Entity;
 
+use JMS\JobQueueBundle\Exception\InvalidStateTransitionException;
 use JMS\JobQueueBundle\Entity\Job;
 use PHPUnit\Framework\TestCase;
 
@@ -42,7 +43,7 @@ class JobTest extends TestCase
      */
     public function testInvalidTransition(Job $job)
     {
-        $this->expectException(\JMS\JobQueueBundle\Exception\InvalidStateTransitionException::class);
+        $this->expectException(InvalidStateTransitionException::class);
         $job->setState('failed');
     }
 

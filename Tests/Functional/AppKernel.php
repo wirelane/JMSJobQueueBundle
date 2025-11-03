@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace JMS\JobQueueBundle\Tests\Functional;
 
+use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
+use Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle;
+use Symfony\Bundle\TwigBundle\TwigBundle;
+use JMS\JobQueueBundle\Tests\Functional\TestBundle\TestBundle;
+use JMS\JobQueueBundle\JMSJobQueueBundle;
+
 // Set-up composer auto-loading if Client is insulated.
 call_user_func(function() {
     if ( ! is_file($autoloadFile = __DIR__.'/../../vendor/autoload.php')) {
@@ -40,13 +47,13 @@ class AppKernel extends Kernel
     public function registerBundles(): array
     {
         return array(
-            new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
-            new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
-            new \Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle(),
-            new \Symfony\Bundle\TwigBundle\TwigBundle(),
+            new FrameworkBundle(),
+            new DoctrineBundle(),
+            new DoctrineFixturesBundle(),
+            new TwigBundle(),
 
-            new \JMS\JobQueueBundle\Tests\Functional\TestBundle\TestBundle(),
-            new \JMS\JobQueueBundle\JMSJobQueueBundle(),
+            new TestBundle(),
+            new JMSJobQueueBundle(),
         );
     }
 
