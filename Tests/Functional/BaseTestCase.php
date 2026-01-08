@@ -19,6 +19,13 @@ class BaseTestCase extends WebTestCase
         return new AppKernel($config);
     }
 
+    protected function tearDown(): void
+    {
+        // Clear exception handler set by Symfony's ErrorHandler to avoid PHPUnit warnings
+        restore_exception_handler();
+        parent::tearDown();
+    }
+
     protected final function importDatabaseSchema()
     {
         foreach (self::$kernel->getContainer()->get('doctrine')->getManagers() as $em) {

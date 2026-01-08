@@ -91,6 +91,8 @@ CONFIG
 
             $process->stop(5);
         }
+
+        parent::tearDown();
     }
 
     private function waitUntilJobsProcessed($maxRuntime)
