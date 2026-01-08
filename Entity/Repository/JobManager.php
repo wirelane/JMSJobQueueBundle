@@ -430,7 +430,7 @@ class JobManager
             throw new \RuntimeException(sprintf(
                 'Expected Doctrine ORM EntityManager for class %s, got %s',
                 Job::class,
-                is_object($manager) ? get_class($manager) : gettype($manager)
+                get_debug_type($manager)
             ));
         }
 

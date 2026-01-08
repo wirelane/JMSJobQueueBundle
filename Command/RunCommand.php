@@ -352,7 +352,7 @@ class RunCommand extends Command
         }
 
         $job->setState(Job::STATE_RUNNING);
-        $em = $em = $this->getEntityManager();
+        $em = $this->getEntityManager();
         $em->persist($job);
         $em->flush();
 
@@ -439,7 +439,7 @@ class RunCommand extends Command
             throw new \RuntimeException(sprintf(
                 'Expected Doctrine ORM EntityManager for class %s, got %s',
                 Job::class,
-                is_object($manager) ? get_class($manager) : gettype($manager)
+                get_debug_type($manager)
             ));
         }
 

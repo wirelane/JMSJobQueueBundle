@@ -36,6 +36,8 @@ class SafeObjectType extends Type
             throw new ConversionException(sprintf('Failed to convert database value to %s via unserialize: %s', $this->getName(), $e->getMessage()), 0, $e);
         }
 
+        // unserialize() returns false both on failure and when successfully unserializing boolean false ('b:0;')
+        // We need to distinguish between these cases to avoid false positives on valid false values
         if ($result === false && $value !== 'b:0;') {
             throw new ConversionException(sprintf('Failed to convert database value to %s via unserialize.', $this->getName()));
         }
