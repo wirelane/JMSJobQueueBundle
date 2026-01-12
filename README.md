@@ -1,6 +1,6 @@
 # JMSJobQueueBundle
 
-Fork from the original [JMSJobQueueBundle](https://github.com/schmittjoh/JMSJobQueueBundle) to support **PHP 8**, **Symfony 5+**, and **Doctrine Common 3**.
+Fork from the original [JMSJobQueueBundle](https://github.com/schmittjoh/JMSJobQueueBundle) to support **PHP 8**, **Symfony 6+**, and **Doctrine Common 3**.
 
 ---
 
