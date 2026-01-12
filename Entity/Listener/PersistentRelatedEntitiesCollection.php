@@ -370,7 +370,7 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         $this->entities = $entities;
     }
 
-    public function findFirst(Closure $p)
+    public function findFirst(Closure $p): mixed
     {
         $this->initialize();
 
@@ -383,7 +383,7 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         return null;
     }
 
-    public function reduce(Closure $func, mixed $initial = null)
+    public function reduce(Closure $func, mixed $initial = null): mixed
     {
         $this->initialize();
 
