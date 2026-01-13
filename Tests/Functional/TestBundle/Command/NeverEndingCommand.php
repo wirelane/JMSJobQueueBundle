@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Tests\Functional\TestBundle\Command;
 
 use Symfony\Component\Console\Command\Command;
@@ -15,6 +17,7 @@ class NeverEndingCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        // @phpstan-ignore-next-line while.alwaysTrue
         while (true) {
             sleep(5);
         }

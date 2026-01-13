@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Tests\Functional;
 
 use Doctrine\ORM\EntityManager;
@@ -89,13 +91,15 @@ CONFIG
 
             $process->stop(5);
         }
+
+        parent::tearDown();
     }
 
     private function waitUntilJobsProcessed($maxRuntime)
     {
         $start = time();
         do {
-            usleep(2E5);
+            usleep(200000);
 
             /** @var EntityManager $em */
             $em = self::$kernel->getContainer()->get('doctrine')->getManager();

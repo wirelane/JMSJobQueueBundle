@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Entity\Type;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
@@ -28,15 +30,19 @@ class SafeObjectType extends Type
 
         $value = is_resource($value) ? stream_get_contents($value) : $value;
 
-        set_error_handler(function (int $code, string $message): bool {
-            throw ConversionException::conversionFailedUnserialization($this->getName(), $message);
-        });
-
         try {
-            return unserialize($value);
-        } finally {
-            restore_error_handler();
+            $result = @unserialize($value);
+        } catch (\Throwable $e) {
+            throw new ConversionException(sprintf('Failed to convert database value to %s via unserialize: %s', $this->getName(), $e->getMessage()), 0, $e);
         }
+
+        // unserialize() returns false both on failure and when successfully unserializing boolean false ('b:0;')
+        // We need to distinguish between these cases to avoid false positives on valid false values
+        if ($result === false && $value !== 'b:0;') {
+            throw new ConversionException(sprintf('Failed to convert database value to %s via unserialize.', $this->getName()));
+        }
+
+        return $result;
     }
 
     public function getName(): string

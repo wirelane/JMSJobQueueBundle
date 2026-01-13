@@ -1,9 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Tests\Functional;
 
-use Doctrine\ORM\EntityManager;
-use JMS\JobQueueBundle\Entity\Job;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Process\Process;
 
@@ -18,7 +18,7 @@ class SignalTest extends TestCase
         $proc = Process::fromShellCommandline('exec '.PHP_BINARY.' '.escapeshellarg(__DIR__.'/console').' jms-job-queue:run --worker-name=test --verbose --max-runtime=999999');
         $proc->start();
 
-        usleep(5E5);
+        usleep(500000);
 
         $this->assertTrue($proc->isRunning(), 'Process exited prematurely: '.$proc->getOutput().$proc->getErrorOutput());
         $this->assertTrueWithin(
@@ -63,7 +63,7 @@ class SignalTest extends TestCase
                 $this->fail('Failure handler did not raise an exception.');
             }
 
-            usleep(2E5);
+            usleep(200000);
         }
     }
 }

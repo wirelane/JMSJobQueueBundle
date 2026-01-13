@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Copyright 2012 Johannes M. Schmitt <schmittjoh@gmail.com>
  *
@@ -15,16 +17,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 namespace JMS\JobQueueBundle\Command;
 
-use Doctrine\Persistence\ObjectManager;
+use Doctrine\ORM\Exception\ORMException;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\EntityManagerInterface;
 use JMS\JobQueueBundle\Entity\Job;
 use JMS\JobQueueBundle\Entity\Repository\JobManager;
 use JMS\JobQueueBundle\Event\NewOutputEvent;
 use JMS\JobQueueBundle\Event\StateChangeEvent;
 use JMS\JobQueueBundle\Exception\InvalidArgumentException;
 use Symfony\Bridge\Doctrine\ManagerRegistry;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -33,9 +37,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
+#[AsCommand('jms-job-queue:run')]
 class RunCommand extends Command
 {
-    protected static $defaultName = 'jms-job-queue:run';
 
     /** @var string */
     private $env;
@@ -45,37 +49,17 @@ class RunCommand extends Command
 
     /** @var OutputInterface */
     private $output;
+    private array $runningJobs = array();
+    private bool $shouldShutdown = false;
 
-    /** @var ManagerRegistry */
-    private $registry;
-
-    /** @var JobManager */
-    private $jobManager;
-
-    /** @var EventDispatcherInterface */
-    private $dispatcher;
-
-    /** @var array */
-    private $runningJobs = array();
-
-    /** @var bool */
-    private $shouldShutdown = false;
-
-    /** @var array */
-    private $queueOptionsDefault;
-
-    /** @var array */
-    private $queueOptions;
-
-    public function __construct(ManagerRegistry $managerRegistry, JobManager $jobManager, EventDispatcherInterface $dispatcher, array $queueOptionsDefault, array $queueOptions)
-    {
+    public function __construct(
+        private readonly ManagerRegistry $registry,
+        private readonly JobManager $jobManager,
+        private readonly EventDispatcherInterface $dispatcher,
+        private readonly array $queueOptionsDefault,
+        private readonly array $queueOptions
+    ) {
         parent::__construct();
-
-        $this->registry = $managerRegistry;
-        $this->jobManager = $jobManager;
-        $this->dispatcher = $dispatcher;
-        $this->queueOptionsDefault = $queueOptionsDefault;
-        $this->queueOptions = $queueOptions;
     }
 
     protected function configure(): void
@@ -131,7 +115,6 @@ class RunCommand extends Command
         $this->env = $input->getOption('env');
         $this->verbose = $input->getOption('verbose');
         $this->output = $output;
-        $this->getEntityManager()->getConnection()->getConfiguration()->setSQLLogger(null);
 
         if ($this->verbose) {
             $this->output->writeln('Cleaning up stale jobs');
@@ -183,7 +166,7 @@ class RunCommand extends Command
             $this->startJobs($workerName, $idleTime, $maxJobs, $restrictedQueues, $queueOptionsDefaults, $queueOptions);
 
             $waitTimeInMs = random_int(500, 1000);
-            usleep($waitTimeInMs * 1E3);
+            usleep($waitTimeInMs * 1000);
         }
 
         if ($this->verbose) {
@@ -275,8 +258,8 @@ class RunCommand extends Command
     }
 
     /**
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     private function checkRunningJobs(): void
     {
@@ -449,8 +432,18 @@ class RunCommand extends Command
         return $args;
     }
 
-    private function getEntityManager(): ObjectManager
+    private function getEntityManager(): EntityManagerInterface
     {
-        return /** @var ObjectManager */ $this->registry->getManagerForClass(Job::class);
+        $manager = $this->registry->getManagerForClass(Job::class);
+
+        if (!$manager instanceof EntityManagerInterface) {
+            throw new \RuntimeException(sprintf(
+                'Expected Doctrine ORM EntityManager for class %s, got %s',
+                Job::class,
+                get_debug_type($manager)
+            ));
+        }
+
+        return $manager;
     }
 }

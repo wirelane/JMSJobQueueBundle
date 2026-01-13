@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Tests\Functional;
 
-use Doctrine\ORM\EntityManager;
 use JMS\JobQueueBundle\Entity\Job;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -12,8 +13,6 @@ class CronTest extends BaseTestCase
     /** @var Application */
     private $app;
 
-    /** @var EntityManager */
-    private $em;
 
     public function testSchedulesCommands()
     {
@@ -35,7 +34,7 @@ class CronTest extends BaseTestCase
         $this->app->setAutoExit(false);
         $this->app->setCatchExceptions(false);
 
-        $this->em = self::$kernel->getContainer()->get('doctrine')->getManagerForClass(Job::class);
+        self::$kernel->getContainer()->get('doctrine')->getManagerForClass(Job::class);
     }
 
     private function doRun(array $args = array())

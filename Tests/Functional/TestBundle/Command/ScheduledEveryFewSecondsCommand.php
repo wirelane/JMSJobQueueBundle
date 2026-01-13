@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Tests\Functional\TestBundle\Command;
 
 use JMS\JobQueueBundle\Console\CronCommand;
@@ -25,5 +27,7 @@ class ScheduledEveryFewSecondsCommand extends Command implements CronCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $output->writeln('Done');
+
+        return Command::SUCCESS;
     }
 }

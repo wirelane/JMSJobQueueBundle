@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Copyright 2012 Johannes M. Schmitt <schmittjoh@gmail.com>
  *
@@ -15,10 +17,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 namespace JMS\JobQueueBundle\Tests\Entity;
 
+use JMS\JobQueueBundle\Exception\InvalidStateTransitionException;
 use JMS\JobQueueBundle\Entity\Job;
+use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\TestCase;
 
 class JobTest extends TestCase
@@ -36,18 +39,14 @@ class JobTest extends TestCase
         return $job;
     }
 
-    /**
-     * @depends testConstruct
-     */
+    #[Depends('testConstruct')]
     public function testInvalidTransition(Job $job)
     {
-        $this->expectException(\JMS\JobQueueBundle\Exception\InvalidStateTransitionException::class);
+        $this->expectException(InvalidStateTransitionException::class);
         $job->setState('failed');
     }
 
-    /**
-     * @depends testConstruct
-     */
+    #[Depends('testConstruct')]
     public function testStateToRunning(Job $job)
     {
         $job->setState('running');
@@ -59,9 +58,7 @@ class JobTest extends TestCase
         return $job;
     }
 
-    /**
-     * @depends testStateToRunning
-     */
+    #[Depends('testStateToRunning')]
     public function testStateToFailed(Job $job)
     {
         $job = clone $job;
@@ -70,9 +67,7 @@ class JobTest extends TestCase
         $this->assertEquals('failed', $job->getState());
     }
 
-    /**
-     * @depends testStateToRunning
-     */
+    #[Depends('testStateToRunning')]
     public function testStateToTerminated(Job $job)
     {
         $job = clone $job;
@@ -81,9 +76,7 @@ class JobTest extends TestCase
         $this->assertEquals('terminated', $job->getState());
     }
 
-    /**
-     * @depends testStateToRunning
-     */
+    #[Depends('testStateToRunning')]
     public function testStateToFinished(Job $job)
     {
         $job = clone $job;
@@ -168,18 +161,14 @@ class JobTest extends TestCase
         return $a;
     }
 
-    /**
-     * @depends testAddRetryJob
-     */
+    #[Depends('testAddRetryJob')]
     public function testIsRetryJob(Job $a)
     {
         $this->assertFalse($a->isRetryJob());
         $this->assertTrue($a->getRetryJobs()->get(0)->isRetryJob());
     }
 
-    /**
-     * @depends testAddRetryJob
-     */
+    #[Depends('testAddRetryJob')]
     public function testGetOriginalJob(Job $a)
     {
         $this->assertSame($a, $a->getOriginalJob());

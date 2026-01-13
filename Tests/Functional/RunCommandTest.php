@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Tests\Functional;
 
 use JMS\JobQueueBundle\Entity\Job;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -51,9 +54,7 @@ class RunCommandTest extends BaseTestCase
         $this->assertEquals('finished', $job->getState());
     }
 
-    /**
-     * @group queues
-     */
+    #[Group('queues')]
     public function testQueueWithLimitedConcurrentJobs()
     {
         $outputFile = tempnam(sys_get_temp_dir(), 'job-output');
@@ -85,9 +86,7 @@ OUTPUT
         );
     }
 
-    /**
-     * @group queues
-     */
+    #[Group('queues')]
     public function testQueueWithMoreThanOneConcurrentJob()
     {
         $outputFile = tempnam(sys_get_temp_dir(), 'job-output');
@@ -118,9 +117,7 @@ OUTPUT
         );
     }
 
-    /**
-     * @group queues
-     */
+    #[Group('queues')]
     public function testSingleRestrictedQueue()
     {
         $a = new Job('jms-job-queue:successful-cmd');
@@ -137,9 +134,7 @@ OUTPUT
         $this->assertEquals(Job::STATE_PENDING, $c->getState());
     }
 
-    /**
-     * @group queues
-     */
+    #[Group('queues')]
     public function testMultipleRestrictedQueues()
     {
         $a = new Job('jms-job-queue:successful-cmd');
@@ -156,9 +151,7 @@ OUTPUT
         $this->assertEquals(Job::STATE_FINISHED, $c->getState());
     }
 
-    /**
-     * @group queues
-     */
+    #[Group('queues')]
     public function testNoRestrictedQueue()
     {
         $a = new Job('jms-job-queue:successful-cmd');
@@ -175,9 +168,7 @@ OUTPUT
         $this->assertEquals(Job::STATE_FINISHED, $c->getState());
     }
 
-    /**
-     * @group retry
-     */
+    #[Group('retry')]
     public function testRetry()
     {
         $job = new Job('jms-job-queue:sometimes-failing-cmd', array(time()));
@@ -203,9 +194,7 @@ OUTPUT
         $this->assertEquals('terminated', $job->getState());
     }
 
-    /**
-     * @group priority
-     */
+    #[Group('priority')]
     public function testJobsWithHigherPriorityAreStartedFirst()
     {
         $job = new Job('jms-job-queue:successful-cmd');
@@ -229,9 +218,7 @@ OUTPUT
         );
     }
 
-    /**
-     * @group priority
-     */
+    #[Group('priority')]
     public function testJobsAreStartedInCreationOrderWhenPriorityIsEqual()
     {
         $job = new Job('jms-job-queue:successful-cmd', array(), true, Job::DEFAULT_QUEUE, Job::PRIORITY_HIGH);
@@ -256,9 +243,7 @@ OUTPUT
 
     }
 
-    /**
-     * @group exception
-     */
+    #[Group('exception')]
     public function testExceptionStackTraceIsSaved()
     {
         $job = new Job('jms-job-queue:throws-exception-cmd');

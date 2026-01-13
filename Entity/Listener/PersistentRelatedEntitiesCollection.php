@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Entity\Listener;
 
 use ArrayIterator;
@@ -8,7 +10,9 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Expr\ClosureExpressionVisitor;
+use Doctrine\Common\Collections\Order;
 use Doctrine\Common\Collections\Selectable;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use JMS\JobQueueBundle\Entity\Job;
 
@@ -17,18 +21,19 @@ use JMS\JobQueueBundle\Entity\Job;
  *
  * We do not support all of Doctrine's built-in features.
  *
+ * @implements Collection<int, object>
+ * @implements Selectable<int, object>
+ *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 class PersistentRelatedEntitiesCollection implements Collection, Selectable
 {
-    private ManagerRegistry $registry;
-    private Job $job;
     private ?array $entities = null;
 
-    public function __construct(ManagerRegistry $registry, Job $job)
+    public function __construct(
+        private readonly ManagerRegistry $registry,
+        private readonly Job $job)
     {
-        $this->registry = $registry;
-        $this->job = $job;
     }
 
     public function toArray(): array
@@ -207,7 +212,15 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
     {
         $this->initialize();
 
-        return new ArrayCollection(array_filter($this->entities, $p));
+        $filtered = array_filter(
+            $this->entities,
+            static function ($value, $key) use ($p): bool {
+                return (bool) $p($value, $key);
+            },
+            ARRAY_FILTER_USE_BOTH
+        );
+
+        return new ArrayCollection($filtered);
     }
 
     public function forAll(Closure $p): bool
@@ -269,10 +282,11 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
             $filtered = array_filter($filtered, $filter);
         }
 
-        if (null !== $orderings = $criteria->getOrderings()) {
+        $orderings = $criteria->orderings();
+        if ($orderings !== []) {
             $next = null;
             foreach (array_reverse($orderings) as $field => $ordering) {
-                $next = ClosureExpressionVisitor::sortByField($field, $ordering == 'DESC' ? -1 : 1, $next);
+                $next = ClosureExpressionVisitor::sortByField($field, $ordering === Order::Descending ? -1 : 1, $next);
             }
 
             usort($filtered, $next);
@@ -294,10 +308,21 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
             return;
         }
 
-        $con = $this->registry->getManagerForClass(Job::class)->getConnection();
+        $manager = $this->registry->getManagerForClass(Job::class);
+
+        if (!$manager instanceof EntityManagerInterface) {
+            throw new \RuntimeException(sprintf(
+                'Expected Doctrine ORM EntityManager for class %s, got %s',
+                Job::class,
+                get_debug_type($manager)
+            ));
+        }
+
         $entitiesPerClass = [];
         $count = 0;
-        foreach ($con->query("SELECT related_class, related_id FROM jms_job_related_entities WHERE job_id = ".$this->job->getId()) as $data) {
+        $sql = 'SELECT related_class, related_id FROM jms_job_related_entities WHERE job_id = ?';
+        $rows = $manager->getConnection()->executeQuery($sql, [$this->job->getId()])->fetchAllAssociative();
+        foreach ($rows as $data) {
             ++$count;
             $entitiesPerClass[$data['related_class']][] = json_decode($data['related_id'], true);
         }
@@ -311,6 +336,15 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         $entities = [];
         foreach ($entitiesPerClass as $className => $ids) {
             $em = $this->registry->getManagerForClass($className);
+
+            if (!$em instanceof EntityManagerInterface) {
+                throw new \RuntimeException(sprintf(
+                    'Expected Doctrine ORM EntityManager for class %s, got %s',
+                    $className,
+                    get_debug_type($em)
+                ));
+            }
+
             $qb = $em->createQueryBuilder()
                 ->select('e')->from($className, 'e');
 
@@ -336,13 +370,29 @@ class PersistentRelatedEntitiesCollection implements Collection, Selectable
         $this->entities = $entities;
     }
 
-    public function findFirst(Closure $p)
+    public function findFirst(Closure $p): mixed
     {
-        // TODO: Implement findFirst() method.
+        $this->initialize();
+
+        foreach ($this->entities as $key => $element) {
+            if ($p($key, $element)) {
+                return $element;
+            }
+        }
+
+        return null;
     }
 
-    public function reduce(Closure $func, mixed $initial = null)
+    public function reduce(Closure $func, mixed $initial = null): mixed
     {
-        // TODO: Implement reduce() method.
+        $this->initialize();
+
+        return array_reduce(
+            $this->entities,
+            static function ($carry, $value) use ($func) {
+                return $func($carry, $value);
+            },
+            $initial
+        );
     }
 }

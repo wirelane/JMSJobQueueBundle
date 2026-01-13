@@ -1,18 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Tests\Functional;
 
+use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\ORM\EntityManager;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 class BaseTestCase extends WebTestCase
 {
-    static protected function createKernel(array $options = array())
+    protected static function createKernel(array $options = array()): KernelInterface
     {
         $config = isset($options['config']) ? $options['config'] : 'default.yml';
 
         return new AppKernel($config);
+    }
+
+    protected function tearDown(): void
+    {
+        // Clear exception handler set by Symfony's ErrorHandler to avoid PHPUnit warnings
+        restore_exception_handler();
+        parent::tearDown();
     }
 
     protected final function importDatabaseSchema()
@@ -26,7 +37,7 @@ class BaseTestCase extends WebTestCase
     {
         $metadata = $em->getMetadataFactory()->getAllMetadata();
         if (!empty($metadata)) {
-            $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($em);
+            $schemaTool = new SchemaTool($em);
             $schemaTool->createSchema($metadata);
         }
     }

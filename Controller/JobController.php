@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\Controller;
 
 use Doctrine\Common\Util\ClassUtils;

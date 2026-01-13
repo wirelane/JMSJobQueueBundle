@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Copyright 2012 Johannes M. Schmitt <schmittjoh@gmail.com>
  *
@@ -15,7 +17,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 namespace JMS\JobQueueBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -36,7 +37,8 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('jms_job_queue');
         $rootNode = $treeBuilder->getRootNode();
-
+        
+        /** @var ArrayNodeDefinition $rootNode */
         $rootNode
             ->children()
                 ->booleanNode('statistics')->defaultTrue()->end();
@@ -52,6 +54,8 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode('queue_options')
                     ->useAttributeAsKey('queue')
                     ->prototype('array');
+
+        /** @var ArrayNodeDefinition $queueOptionsNode */
         $this->addQueueOptions($queueOptionsNode);
 
         return $treeBuilder;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JMS\JobQueueBundle\DependencyInjection\CompilerPass;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -8,7 +10,7 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class LinkGeneratorsPass implements CompilerPassInterface
 {
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         $generators = array();
         foreach ($container->findTaggedServiceIds('jms_job_queue.link_generator') as $id => $attrs) {
