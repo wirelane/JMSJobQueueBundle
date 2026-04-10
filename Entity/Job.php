@@ -34,6 +34,7 @@ use Symfony\Component\ErrorHandler\Exception\FlattenException;
 #[ORM\Table(name: 'jms_jobs')]
 #[ORM\Index(name: 'cmd_search_index', columns: ['command'])]
 #[ORM\Index(name: 'sorting_index', columns: ['state', 'priority', 'id'])]
+#[ORM\Index(name: 'queue_state_execute_after_index', columns: ['queue', 'state', 'executeAfter'])]
 #[ORM\Entity]
 #[ORM\ChangeTrackingPolicy('DEFERRED_EXPLICIT')]
 class Job
