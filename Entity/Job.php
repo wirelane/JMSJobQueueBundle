@@ -116,7 +116,7 @@ class Job
     #[ORM\Column(type: Types::DATETIME_MUTABLE, name: 'checkedAt', nullable: true)]
     private ?\DateTimeInterface $checkedAt = null;
 
-    #[ORM\Column(type: Types::STRING, name: 'workerName', length: 50, nullable: true)]
+    #[ORM\Column(type: Types::STRING, name: 'workerName', length: 100, nullable: true)]
     private ?string $workerName = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, name: 'executeAfter', nullable: true)]
